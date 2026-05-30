@@ -4,7 +4,7 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket         = "puliawsbucket" # change this
+    bucket         = "puliars" # change this
     key            = "aws.tfstate"
     region         = "eu-west-1"
   }
