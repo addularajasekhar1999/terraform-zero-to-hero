@@ -15,3 +15,6 @@ resource "aws_instance" "example" {
     instance_type = "t3.micro"
 }
 
+
+#OAO8EqFjKqdxISkT72om+AxsoK95AYeMFUsMfSYF
+
