@@ -1,0 +1,85 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  awsRegion: "eu-west-1"
+  tfStateBucket: "puliars"
+  tfStateKey: "yaml.tfstate"
+
+stages:
+
+# Stage 1 - Terraform Plan
+- stage: TerraformPlan
+  displayName: Terraform Plan
+
+  jobs:
+  - job: Plan
+    steps:
+
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: 'latest'
+
+    - task: TerraformTaskV4@4
+      displayName: Terraform Init
+      inputs:
+        provider: 'aws'
+        command: 'init'
+        backendServiceAWS: 'AWS'
+        backendAWSBucketName: '$(tfStateBucket)'
+        backendAWSKey: '$(tfStateKey)'
+        backendAWSRegion: '$(awsRegion)'
+
+    - task: TerraformTaskV4@4
+      displayName: Terraform Validate
+      inputs:
+        provider: 'aws'
+        command: 'validate'
+
+    - task: TerraformTaskV4@4
+      displayName: Terraform Plan
+      inputs:
+        provider: 'aws'
+        command: 'plan'
+        environmentServiceNameAWS: 'AWS'
+
+# Stage 2 - Apply
+- stage: TerraformApply
+  displayName: Terraform Apply
+
+  dependsOn: TerraformPlan
+
+  jobs:
+  - deployment: Apply
+    displayName: Terraform Apply
+
+    environment: terraform-prod
+
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: 'latest'
+
+          - task: TerraformTaskV4@4
+            displayName: Terraform Init
+            inputs:
+              provider: 'aws'
+              command: 'init'
+              backendServiceAWS: 'AWS'
+              backendAWSBucketName: '$(tfStateBucket)'
+              backendAWSKey: '$(tfStateKey)'
+              backendAWSRegion: '$(awsRegion)'
+
+          - task: TerraformTaskV4@4
+            displayName: Terraform Apply
+            inputs:
+              provider: 'aws'
+              command: 'apply'
+              environmentServiceNameAWS: 'AWS'
